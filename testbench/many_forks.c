@@ -1,49 +1,51 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   wait.c                                             :+:      :+:    :+:   */
+/*   many_forks.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pbiederm <pbiederm@student.42wolfsburg.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/07/25 11:04:11 by pbiederm          #+#    #+#             */
-/*   Updated: 2022/07/25 11:49:41 by pbiederm         ###   ########.fr       */
+/*   Created: 2022/07/25 15:54:44 by pbiederm          #+#    #+#             */
+/*   Updated: 2022/07/25 17:34:30 by pbiederm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// The order of the proccesses is decided by the operating system.
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include <sys/wait.h>
-// #include <time.h>
+#include <errno.h>
+
 int main (void)
 {
-	int id = fork();
-	int hp;
-	if (id == 0)
+	int id1 = fork();
+	int id2 = fork();
+
+	if (id1 == 0)
 	{
-		hp = 4;
-		// printf ("Apprentice hp: %d", hp);
+		if (id2 == 0)
+		{
+			printf("I am protos y - child of x protos\n");
+		}
+		else
+		{
+			printf("I am protos x - parent of y protos, child of parent protos\n");
+		}
 	}
 	else
 	{
-		hp = 16;
-		// printf ("Sage hp %d", hp);
+		if (id2 == 0)
+		{
+			printf("I am protos z second child of parent protos\n");
+		}
+		else
+		{
+			printf("I am the parent protos\n");		
+		}
 	}
-	if (id != 0)
+	while (wait(NULL) != -1 || errno != ECHILD)
 	{
-		wait(0);
+		printf("Waited for a child to finish\n");
 	}
-	int health_buff;
-	health_buff = hp; 
-	while (health_buff < hp + 5)
-	{
-		printf("Buffed %d health: %d ", id, health_buff);
-		// fflush(stdout);
-		health_buff++;
-	}
-	if (id != 0)
-	{
-	printf("\n");
-	}
-
 }
