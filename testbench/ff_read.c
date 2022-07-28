@@ -6,7 +6,7 @@
 /*   By: pbiederm <pbiederm@student.42wolfsburg.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/07/27 17:15:09 by pbiederm          #+#    #+#             */
-/*   Updated: 2022/07/27 17:27:52 by pbiederm         ###   ########.fr       */
+/*   Updated: 2022/07/28 10:16:15 by pbiederm         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,9 @@
 int main (int ac, char **av)
 {
 	int arr[5];
+	// int arr2[5];
 	int fd = open ("sum", O_RDONLY);
+	int fd2 = open ("sumback", O_WRONLY);
 	printf("Opening\n");
 	if (fd == -1)
 	{
@@ -38,7 +40,14 @@ int main (int ac, char **av)
 			printf("Err while reading\n");
 			return (2);
 		}
-		printf("Recieved %d\n", arr[i]);
+		// arr2[i] = arr[i];
+		// if (write(fd2, &arr2[i], sizeof(int)) == -1)
+		if (write(fd2, &arr[i], sizeof(int)) == -1)
+		{
+			printf("Err while writing\n");
+			return (3);	
+		}
+		printf("Recieved %d & sent back %d\n", arr[i], arr[i]);
 	}
 	return(0);
 }
