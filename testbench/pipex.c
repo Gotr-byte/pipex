@@ -24,22 +24,14 @@ char **ft_path_array(char** env)
 	i = 0;
 	while (env[i]!=NULL)
 	{
-		printf("Searching for Path\n");
 		if (env[i][0] == 'P' && env[i][1] == 'A' && env[i][2] == 'T' && env[i][3] == 'H')
-		// if (ft_strncmp("PATH", env[i], 4))
 		{
-			printf ("Found Path\n");
 			path_array = ft_split(ft_substr(env[i], 5, ft_strlen(env[i])), ':');
-			// i = 0;
-			// while (path_array[i] != NULL)
-			// {
-				// printf("%s\n", path_array[i]);
-			// 	i++;
-			// }
 			break;
 		}
 		i++;
 	}
+		path_array[i] = '\0';
 		return(path_array);
 }
 
@@ -48,13 +40,15 @@ int main (int ac, char **av, char **env)
 {
 	char** 	path_array;
 	int		i;
+	int 	fd;
+	fd = open(av[2], O_CREAT | O_RDWR | O_TRUNC, 0777);
 
+	dup2(fd,1);
+	close(fd);
 	i = 0;
 	path_array = ft_path_array(env);
 	while (path_array[i] != NULL)
 	{
-		printf("%s\n",ft_strjoin(path_array[i], ft_strjoin("/", av[1])));
-		printf("%d\n", access(ft_strjoin(path_array[i], ft_strjoin("/", av[1])), F_OK));
 		if((access(ft_strjoin(path_array[i], ft_strjoin("/", av[1])), F_OK)) == 0)
 			execve(ft_strjoin(path_array[i], ft_strjoin("/", av[1])), &av[1], env);
 		i++;
