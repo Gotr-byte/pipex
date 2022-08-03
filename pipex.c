@@ -40,39 +40,21 @@ char	**ft_path_array(char **env)
 	return (path_array);
 }
 
-// int ft_child_one(int fd0, int fd1, int pfd0, int pfd1, char **pat, char *av2)
-// {
-// 	int i;
-// 	int access_to_command;
-// 	char **command;
-// 	close(pfd0);
-// 	close(fd1);
-// 	dup2(fd0, STDIN_FILENO);
-// 	close(fd0);
-// 	dup2(pfd1, STDOUT_FILENO);
-// 	close(pfd1);
-// 	i = 0;
-// 	access_to_command = -1;
-// 	// path_array = ft_path_array(env);
-// 	command = ft_split(av2, ' ');
-// 	if (command[0] == NULL)
-// 	{
-// 		perror("No command entered");
-// 		return(667);
-// 	}
-// 	while (pat[i] != NULL)
-// 	{
-// 		access_to_command = access(ft_strjoin(pat[i], ft_strjoin("/", command[0])), F_OK);
-// 		i++;
-// 	}
-// 	if (access_to_command < 0)
-// 	{
-// 		perror("Child one wrong command: ");
-// 		// exit ;
-// 	}
-// 	return(access_to_command);
-// }
-void	ft_child_one(int fd0, int fd1, int pfd0, int pfd1)
+struct	mediatior
+{
+	char	**path_array;
+	char	**command;
+	int		i;
+	int 	fdr;
+	int		fdw;
+	int		pfd[2];
+	int		access_to_command;
+	int		status;
+	int		id_greg;
+	int		id_sara;
+}m;
+
+int	ft_child_one(int fd0, int fd1, int pfd0, int pfd1, char	**av, char **env)
 {
 	close(pfd0);
 	close(fd1);
@@ -80,85 +62,114 @@ void	ft_child_one(int fd0, int fd1, int pfd0, int pfd1)
 	close(fd0);
 	dup2(pfd1, STDOUT_FILENO);
 	close(pfd1);
+	m.i = 0;
+	m.path_array = ft_path_array(env);
+	m.command = ft_split(av[2], ' ');
+	if (m.command[0] == NULL)
+	{
+		perror("No command entered");
+		exit(666);
+	}
+	m.access_to_command = -1;
+	while (m.path_array[m.i] != NULL)
+	{
+		m.access_to_command = access(ft_strjoin(m.path_array[m.i], ft_strjoin("/", m.command[0])), F_OK);
+		if (m.access_to_command == 0)
+			execve(ft_strjoin(m.path_array[m.i], ft_strjoin("/", m.command[0])), m.command, env);
+		m.i++;
+	}
+	perror("Child one wrong command");
+	exit(667);
 }
+
+void	ft_child_two(int fdr, int fdw, int pfd0, int pfd1, char **av, char **env)
+{
+	close(pfd1);
+	close(fdr);
+	dup2(pfd0, STDIN_FILENO);
+	close(pfd0);
+	dup2(fdw, STDOUT_FILENO);
+	close(fdw);
+	m.i = 0;
+	m.path_array = ft_path_array(env);
+	m.command = ft_split(av[3], ' ');
+	if (m.command[0] == NULL)
+	{
+		perror("Sara didn't recieve command");
+		exit (668);
+	}
+	while (m.path_array[m.i] != NULL)
+	{
+		if(access(ft_strjoin(m.path_array[m.i], ft_strjoin("/", m.command[0])), F_OK) == 0)
+			execve(ft_strjoin(m.path_array[m.i], ft_strjoin("/", m.command[0])), m.command, env);
+		m.i++;
+	}
+	perror("Sara got the wrong command");
+	exit (668);
+}
+
+void	parent(int fdr, int fdw, int pfd0, int pfd1, int id_greg, int id_sara)
+{
+	close(fdr);
+	close(fdw);
+	close(pfd1);
+	close(pfd0);
+	waitpid(id_greg, &m.status, 0); // wait for child to finish before exiting
+	waitpid(id_sara, &m.status, 0); // wait for child to finish before exiting
+	exit(800);
+}
+
+
+void ft_err_infile (void)
+	{
+		perror("Write infile and enter");
+		exit(701);
+	}
+
+void ft_err_pipe (void)
+	{
+		perror("Pipe failed");
+		exit(702);
+	}
+
+void ft_err_fork (void)
+	{
+		perror("Fork failed");
+		exit(703);
+	}
+
+void ft_err_ac (void)
+	{
+		printf("Wrong number of arrrrgs\n");
+		exit(777);
+	}
 
 int	main (int ac, char **av, char **env)
 {
 	if (ac == 5)
 	{
-
-	char	**path_array;
-	char	**command;
-	int		i;
-	int 	fd[2];
-	int		pfd[2];
-
-	fd[0] = open(av[1], O_RDONLY);
-	if (fd[0] < 0)
-			perror("Write infile and enter: ");
-	fd[1] = open(av[4], O_CREAT | O_WRONLY, 0777);
-	if (pipe(pfd) == -1)
-		perror("Pipe failed: ");
-	int id1 = fork();
-	if(id1 == -1)
-		perror("Fork failed: ");
-	if (id1 == 0)
-	{
-		ft_child_one(fd[0], fd[1], pfd[0], pfd[1]);
-		i = 0;
-		path_array = ft_path_array(env);
-		command = ft_split(av[2], ' ');
-		if (command[0] == NULL)
-			perror("No command entered");
-		int access_to_command;
-		access_to_command = -1;
-		while (path_array[i] != NULL)
-		{
-			access_to_command = access(ft_strjoin(path_array[i], ft_strjoin("/", command[0])), F_OK);
-			if (access_to_command == 0)
-				execve(ft_strjoin(path_array[i], ft_strjoin("/", command[0])), command, env);
-			i++;
-		}
-		perror("Child one wrong command: ");
-	}
+	m.fdr = open(av[1], O_RDONLY);
+	if (m.fdr < 0)
+		ft_err_infile();
+	m.fdw = open(av[4], O_CREAT | O_WRONLY, 0777);
+	if (pipe(m.pfd) == -1)
+		ft_err_pipe();
+	m.id_greg = fork();
+	if(m.id_greg == -1)
+		ft_err_pipe();
+	if (m.id_greg == 0)
+		ft_child_one(m.fdr, m.fdw, m.pfd[0], m.pfd[1], av, env);
 	else
 	{
-		int id2 = fork();
-		if (id2 == 0)
-		{
-			close(pfd[1]);
-			close(fd[0]);
-			dup2(pfd[0], STDIN_FILENO);
-			close(pfd[0]);
-			dup2(fd[1], STDOUT_FILENO);
-			close(fd[1]);
-			i = 0;
-			path_array = ft_path_array(env);
-			command = ft_split(av[3], ' ');
-			while (path_array[i] != NULL)
-			{
-				if(access(ft_strjoin(path_array[i], ft_strjoin("/", command[0])), F_OK) == 0)
-					execve(ft_strjoin(path_array[i], ft_strjoin("/", command[0])), command, env);
-				i++;
-			}
-		}
+		m.id_sara = fork();
+		if (m.id_sara == 0)
+			ft_child_two(m.fdr, m.fdw, m.pfd[0], m.pfd[1], av, env);
 		else
-		{
-			close(fd[0]);
-			close(fd[1]);
-			close(pfd[1]);
-			close(pfd[0]);
-			int status;
-  			waitpid(id1, &status, 0); // wait for child to finish before exiting
-			waitpid(id2, &status, 0); // wait for child to finish before exiting
-		}
+			parent(m.fdr, m.fdw, m.pfd[0], m.pfd[1], m.id_greg, m.id_sara);
 	}
 	}
 	else
-	{
-		printf("Wrong number of arrrrgs\n");
-		return(777);
-	}
+		ft_err_ac();
 }
 
 
